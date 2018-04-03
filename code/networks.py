@@ -90,8 +90,9 @@ def DirectedSimpleNetwork(input_shape, pool_size=(2, 2, 2), n_labels=48, initial
     flat_layer = Flatten()(layer6)
     input2 = Input((48,))
     concat = concatenate([input2,flat_layer],axis=1)
-    dense_layer = Dense(n_labels,activation = 'sigmoid')(concat)
-    model = Model(inputs=[input1,input2], outputs=dense_layer)
+    dense_layer1 = Dense(400, activation='relu', name='fc1')(concat)
+    dense_layer2 = Dense(n_labels,activation = 'sigmoid',name='prediction')(dense_layer1)
+    model = Model(inputs=[input1,input2], outputs=dense_layer2)
     model.compile(optimizer=Adam(lr=initial_learning_rate), loss='binary_crossentropy')
     print(model.summary())
     return model

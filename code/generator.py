@@ -13,7 +13,7 @@ from neuronTree import Treenode, Neurontree
 n_ch,n_x,n_y,n_z = 1, 24,24,24
 sphere_vectors = utils.load_sphere_48_units()
 
-def data_generator_undirected(folderpath,data_filelist, n_label= 48,batch_size= 20,num_nodes_per_img =50,child_step =1):
+def data_generator_undirected(folderpath,data_filelist,n_label= 48,batch_size= 20,num_nodes_per_img =50,child_step =1):
     '''
     read in a random image
     get 50 random node, extract cropped_img and the encoding
@@ -24,30 +24,59 @@ def data_generator_undirected(folderpath,data_filelist, n_label= 48,batch_size= 
     batch = batch_size
     x_patch = np.zeros((batch,n_ch,n_x,n_y,n_z))
     y_patch = np.zeros((batch,n_label))
+    if directed:
+        x2_patch = np.zeros((batch,n_label))
 
     while 1:
         data_file = random.choice(data_filelist)
         #print('%s\n',data_file)
         img_filename = folderpath + '/'+ data_file +'/'+ data_file +'.tif'
         swc_filename = folderpath + '/'+ data_file +'/'+data_file +'.tif.v3dpbd.swc'
-        imgs,labels = sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=num_nodes_per_img, 
+        imgs,labels,_ = sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=num_nodes_per_img, 
                                          child_step = child_step)
         #print('number of sampled img:',len(imgs))
         
-
         for i in range(len(imgs)):
             x_patch[count,0,2:-1,2:-1,2:-1] =imgs[i]
             y_patch[count,:] = labels[i]
             count+=1
-#            fname='../data/patches/img'+str(count)+'.tif'
-#            save_tiff(fname,patches[i])
-#            fname='../data/patches/label'+str(count)+'.tif'
-#            save_tiff(fname,plabels[i]*255)            
-
             if count==batch:
                 yield(x_patch,y_patch)
                 x_patch = np.zeros((batch,n_ch,n_x,n_y,n_z))
                 y_patch = np.zeros((batch,n_label))
+                count=0
+                
+def data_generator_directed(folderpath,data_filelist,n_label= 48,batch_size= 20,num_nodes_per_img =50,child_step =1):
+    '''
+    read in a random image
+    get 50 random node, extract cropped_img and the encoding
+
+    '''
+    count = 0
+    batch = batch_size
+    x_patch = np.zeros((batch,n_ch,n_x,n_y,n_z))
+    y_patch = np.zeros((batch,n_label))
+    x2_patch = np.zeros((batch,n_label))
+
+    while 1:
+        data_file = random.choice(data_filelist)
+        #print('%s\n',data_file)
+        img_filename = folderpath + '/'+ data_file +'/'+ data_file +'.tif'
+        swc_filename = folderpath + '/'+ data_file +'/'+data_file +'.tif.v3dpbd.swc'
+        imgs,labels,p_encoding = sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=num_nodes_per_img, 
+                                         child_step = child_step)
+        #print('number of sampled img:',len(imgs))
+        
+        for i in range(len(imgs)):
+            x_patch[count,0,2:-1,2:-1,2:-1] =imgs[i]
+            y_patch[count,:] = labels[i]
+            x2_patch[count,:] = p_encoding[i]
+            count+=1
+            if count==batch:
+                yield([x_patch,x2_patch],y_patch)
+                x_patch = np.zeros((batch,n_ch,n_x,n_y,n_z))
+                y_patch = np.zeros((batch,n_label))
+                x2_patch = np.zeros((batch,n_label))
                 count=0
 
 def sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=10, 
@@ -59,6 +88,7 @@ def sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=10,
     #init output
     crop_img_list =list()
     encoding_list = list()
+    parent_list = list()
     #read img
     img = utils.load_tiff(img_filename)
     h,w,d = img.shape
@@ -68,27 +98,33 @@ def sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=10,
     #print('neurontree length: ',len(nt),'node_id length',len(node_ids))
 
     #sample nodes
-    #sel_ids = random.sample(node_ids,num_nodes_per_img)
-    sel_ids = [240,1014,1602,2583]
+    sel_ids = random.sample(node_ids,num_nodes_per_img)
     #calc truth
 
     for node_id in sel_ids:
         #check if it has children
         if not nt.HasChildren(node_id,child_step): continue
+        
         cur_node  = nt.GetNode(node_id)
         #check if the cur_node is within image
         if cur_node.x >= h or cur_node.y >=w or cur_node.z >=d: continue        
         
         #get the one_hot encoding
-        encoding, unit_vectors = utils.calc_one_hot_encoding_wrapper(nt,node_id,num_steps = child_step)
+        #encoding, unit_vectors = utils.calc_one_hot_encoding_wrapper(nt,node_id,num_steps = child_step)
+        children_encoding = nt.GetChildrenEncodings(node_id)
+        
+        if not nt.HasParent(node_id): continue
+        parent_encoding = nt.GetParentEncoding(node_id)
+            
         
         #get the cropped image with the center of cur_node
         crop_img,xmin,ymin,zmin = utils.read_cropped_image(cur_node.x,cur_node.y,cur_node.z,img,side_length =side_length)
         
         #append to list
         crop_img_list.append(crop_img)
-        encoding_list.append(encoding)
-        
+        encoding_list.append(children_encoding)
+        parent_list.append(parent_encoding)
+
         #For visualization
         #generate the transformed whole image swc
 #        bk_nt = nt.Copy()
@@ -112,7 +148,8 @@ def sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=10,
 #        utils.save_tiff(fn_cropimg,crop_img.astype('uint8'))
 #        utils.write_ano_file(fn_cropimg, [fn_allswc,fn_traceswc],fn_anno)
 #    print('sample nodes', len(crop_img_list))
-    return (crop_img_list,encoding_list)
+
+    return (crop_img_list,encoding_list,parent_list)
         
         
     

@@ -87,14 +87,26 @@ class Neurontree():
                 vector = np.array([[x-px,y-py,z-pz]])
                 this_node.parent_encoding_max_id= return_one_hot_encoding(vector,True)
             
-                
+    def GetParentEncoding(self,node_id):
+        max_id = self.neurontree[node_id].parent_encoding_max_id
+        encodings =np.zeros((48,))
+        if max_id>0:
+            encodings[max_id] =1
+        return encodings
+        
+    def GetChildrenEncodings(self,node_id):
+        max_ids = self.neurontree[node_id].children_encoding_max_id
+        encodings =np.zeros((48,))
+        if max_ids:
+            for i in max_ids:
+                encodings[i]=1
+        return encodings
+    
     def GetChildrenNodes(self,node_id):        
         if node_id>0:
             children_nodes_id = self.neurontree[node_id].children_id
             if children_nodes_id: #if there are children
-                node_list =[]
-                for i in children_nodes_id:
-                    node_list.append(self.neurontree[i])
+                node_list = [self.GetNode(i) for i in children_nodes_id]
                 return node_list
         return []
     
@@ -122,8 +134,10 @@ class Neurontree():
             return True
         else:
             return False
-
         
+    def HasParent(self,node_id):
+        return self.neurontree[node_id].pid>0
+
     def GetChildrenNodesCoords(self,node_id,num_steps=1):
         #return the coords of children nodes
         nodes = self.GetChildrenNodes_multiple_steps(node_id,num_steps)
