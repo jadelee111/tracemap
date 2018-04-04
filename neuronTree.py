@@ -165,14 +165,31 @@ class Neurontree():
             n.y -= offset_y
             n.z -= offset_z
 
-    def Save(self,filename):
+    def Save(self,filename,node_type =None):
+        '''node_type color
+        0: white
+        1: black
+        2: red
+        3: blue
+        4: purple
+        5: green
+        6 yellow
+        7: another green
+        '''
         file = open(filename,"w")
         file.write("##n,type,x,y,z,radius,parent\n")
-        for i,node_id in enumerate(self.neurontree):
-            node = self.neurontree[node_id]
-            file.write("%d %d %4f %4f %4f %4f %d\n"%(node.node_id,node.node_type,
-                                                 node.x,node.y, node.z,
-                                                 node.radius,node.pid))
+        if node_type is not None:
+            for i,node_id in enumerate(self.neurontree):
+                node = self.neurontree[node_id]
+                file.write("%d %d %4f %4f %4f %4f %d\n"%(node.node_id,node_type,
+                                                     node.x,node.y, node.z,
+                                                     node.radius,node.pid))            
+        else:
+            for i,node_id in enumerate(self.neurontree):
+                node = self.neurontree[node_id]
+                file.write("%d %d %4f %4f %4f %4f %d\n"%(node.node_id,node.node_type,
+                                                     node.x,node.y, node.z,
+                                                     node.radius,node.pid))
         file.close()
 
 

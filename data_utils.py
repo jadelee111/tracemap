@@ -25,15 +25,23 @@ def read_swc(filename):
                      'formats': ('i4','i4', 'f4','f4','f4','f4','i4')})
     return swc
     
-def write_swc(filename,treenodelist):
+def write_swc(filename,treenodelist,node_type= None):
     #treenodelist is a list of treenodes
+    
     file = open(filename,"w")
     file.write("##n,type,x,y,z,radius,parent\n")
-    for i in range(len(treenodelist)):
-        file.write("%d %d %4f %4f %4f %4f %d\n"%(treenodelist[i].node_id,
-                                                 treenodelist[i].node_type,
-                                                 treenodelist[i].x,treenodelist[i].y,treenodelist[i].z,
-                                                 treenodelist[i].radius,treenodelist[i].pid))
+    if node_type is not None:
+        for i in range(len(treenodelist)):
+            file.write("%d %d %4f %4f %4f %4f %d\n"%(treenodelist[i].node_id,
+                                                     node_type,
+                                                     treenodelist[i].x,treenodelist[i].y,treenodelist[i].z,
+                                                     treenodelist[i].radius,treenodelist[i].pid))
+    else:
+        for i in range(len(treenodelist)):
+            file.write("%d %d %4f %4f %4f %4f %d\n"%(treenodelist[i].node_id,
+                                                     treenodelist[i].node_type,
+                                                     treenodelist[i].x,treenodelist[i].y,treenodelist[i].z,
+                                                     treenodelist[i].radius,treenodelist[i].pid))
     file.close()
     
     
