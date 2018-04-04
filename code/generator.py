@@ -24,8 +24,6 @@ def data_generator_undirected(folderpath,data_filelist,n_label= 48,batch_size= 2
     batch = batch_size
     x_patch = np.zeros((batch,n_ch,n_x,n_y,n_z))
     y_patch = np.zeros((batch,n_label))
-    if directed:
-        x2_patch = np.zeros((batch,n_label))
 
     while 1:
         data_file = random.choice(data_filelist)
