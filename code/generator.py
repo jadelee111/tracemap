@@ -10,6 +10,7 @@ import random
 import data_utils as utils
 from neuronTree import Treenode, Neurontree
 
+
 n_ch,n_x,n_y,n_z = 1, 24,24,24
 sphere_vectors = utils.load_sphere_48_units()
 
