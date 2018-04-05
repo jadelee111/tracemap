@@ -34,9 +34,10 @@ def jaccard_coef (y_true, y_pred, smooth=1):
     return jac
 
 def binary_crossentropy_weighted(y_true, y_pred):
-    class_weights = 20
+    class_weights = 10
     y_pred = K.clip(y_pred, K.epsilon(), 1.0 - K.epsilon())
-    loss = K.mean(class_weights*(-y_true * K.log(y_pred) - (1.0 - y_true) * K.log(1.0 - y_pred)),axis=-1)
+    tmp =class_weights*((-y_true * K.log(y_pred))) -(1.0 - y_true) * K.log(1.0 - y_pred)
+    loss = K.mean(tmp,axis=-1)
     return loss
 
 #def jaccard_coef(y_true, y_pred):

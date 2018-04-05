@@ -133,11 +133,13 @@ def write_ano_file(img_path, swc_paths,output_name):
         file.write("SWCFILE=%s\n"%swc_paths[i])
     file.close()
     
-def accuracy(y_true,y_pred):
+def smoothed_jaccard(y_true,y_pred):
     y_pred[y_pred>0.5]=1
     y_pred[y_pred<0.5]=0
     intersection = np.sum(y_pred==y_true)
-    return intersection/48.0
+    smooth = 1
+    jd = (intersection+smooth)/(smooth+48.0)
+    return jd
     
 def read_cropped_image(x,y,z,volume,side_length = 10):
     '''

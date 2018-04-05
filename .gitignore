@@ -1,2 +1,5 @@
+code/.spyproject/
 data/
+__pycache__/
 results/
+weights/
