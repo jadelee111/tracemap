@@ -33,7 +33,6 @@ def jaccard_coef (y_true, y_pred, smooth=1):
     jac = (intersection + smooth) / (sum_ - intersection + smooth)
     return jac
 
-
 def binary_crossentropy_weighted(y_true, y_pred):
     class_weights = 20
     y_pred = K.clip(y_pred, K.epsilon(), 1.0 - K.epsilon())

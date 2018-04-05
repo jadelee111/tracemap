@@ -37,7 +37,7 @@ img_filename = folderpath + '/'+ data_file +'/'+ data_file +'.tif'
 swc_filename = folderpath + '/'+ data_file +'/'+data_file +'.tif.v3dpbd.swc'
 num_sample_nodes =5
 imgs,labels,p_encoding,node_ids = sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=num_sample_nodes, 
-                                 child_step = 1,vis_flag= False)
+                                 child_step = 1,vis_flag= True)
 n_ch,n_x,n_y,n_z = 1, 24,24,24
 batch=num_sample_nodes
 n_label=48
@@ -52,11 +52,9 @@ ypred = model1.predict(x_patch,batch_size=10)
 ypred[ypred>0.5]=1
 ypred[ypred<0.5]=0
 scores=[]
-
 for i in range(batch):
-    score1= jaccard_similarity_score(labels[i],ypred[i,:])
-    score2= utils.accuracy(labels[i],ypred[i,:])
-    scores.append((score1,score2))
+    score = jaccard_similarity_score(labels[i],ypred[i,:])
+    scores.append(score)
 print(scores)
 '''
 sphere_vectors = utils.load_sphere_48_units()
