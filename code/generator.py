@@ -45,6 +45,38 @@ def data_generator_undirected(folderpath,data_filelist,n_label= 48,batch_size= 2
                 y_patch = np.zeros((batch,n_label))
                 count=0
                 
+def data_generator_undirected_sampleweight(folderpath,data_filelist,n_label= 48,batch_size= 20,num_nodes_per_img =50,child_step =1):
+    '''
+    read in a random image
+    get 50 random node, extract cropped_img and the encoding
+
+    '''
+    count = 0
+    batch = batch_size
+    x_patch = np.zeros((batch,n_ch,n_x,n_y,n_z))
+    y_patch = np.zeros((batch,n_label))
+    masks = np.ones((batch,n_label))
+    class_weight = 10
+    while 1:
+        data_file = random.choice(data_filelist)
+        #print('%s\n',data_file)
+        img_filename = folderpath + '/'+ data_file +'/'+ data_file +'.tif'
+        swc_filename = folderpath + '/'+ data_file +'/'+data_file +'.tif.v3dpbd.swc'
+        imgs,labels,_,_ = sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=num_nodes_per_img, 
+                                         child_step = child_step)
+        #print('number of sampled img:',len(imgs))
+        for i in range(len(imgs)):
+            x_patch[count,0,2:-1,2:-1,2:-1] =imgs[i]
+            y_patch[count,:] = labels[i]
+            masks[count,labels[i]>0.5] = class_weight
+            count+=1
+            if count==batch:
+                yield(x_patch,y_patch,masks)
+                x_patch = np.zeros((batch,n_ch,n_x,n_y,n_z))
+                y_patch = np.zeros((batch,n_label))
+                masks = np.ones((batch,n_label))
+                count=0
+                
 def data_generator_directed(folderpath,data_filelist,n_label= 48,batch_size= 20,num_nodes_per_img =50,child_step =1):
     '''
     read in a random image
@@ -118,9 +150,9 @@ def sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=10,
         
         #get the cropped image with the center of cur_node
         crop_img,xmin,ymin,zmin = utils.read_cropped_image(cur_node.x,cur_node.y,cur_node.z,img,side_length =side_length)
-        crop_img/=255.
+        crop_img_norm = crop_img
         #append to list
-        crop_img_list.append(crop_img)
+        crop_img_list.append(crop_img_norm)
         encoding_list.append(children_encoding)
         parent_list.append(parent_encoding)
 
@@ -145,7 +177,7 @@ def sample_nodes_truth(swc_filename,img_filename,num_nodes_per_img=10,
             fn_traceswc = '../results/trace%d_%d.swc'%(node_id,child_step)
             fn_cropimg = '../results/crop%d_%d.tif'%(node_id,child_step)
             fn_anno = '../results/%d_%d.ano'%(node_id,child_step)
-            bk_nt.Save(fn_allswc,1) #black
+            bk_nt.Save(fn_allswc,0) #white
             utils.write_swc(fn_traceswc,out_swc)
             utils.save_tiff(fn_cropimg,crop_img.astype('uint8'))
             utils.write_ano_file(fn_cropimg, [fn_allswc,fn_traceswc],fn_anno)

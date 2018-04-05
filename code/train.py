@@ -3,12 +3,13 @@
 """
 Created on Sun Apr  1 11:54:10 2018
 
+
 @author: chen
 """
 import numpy as np
 import data_utils as utils
-from generator import data_generator_undirected,data_generator_directed,sample_nodes_truth
-from networks import UndirectedSimpleNetwork, DirectedSimpleNetwork
+from generator import data_generator_undirected,data_generator_directed,sample_nodes_truth,data_generator_undirected_sampleweight
+from networks import UndirectedSimpleNetwork, DirectedSimpleNetwork,UndirectedSimpleNetwork_sampleweight
 from keras.callbacks import ModelCheckpoint
 from sklearn.metrics import jaccard_similarity_score
 
@@ -27,6 +28,8 @@ traindatalist2 = traindatalist[0]
 model = UndirectedSimpleNetwork(input_shape, pool_size=(2, 2, 2), n_labels=48, initial_learning_rate=0.00001, depth = 2,
                   n_base_filters=8, batch_normalization=False)
 
+#model = UndirectedSimpleNetwork_sampleweight(input_shape, pool_size=(2, 2, 2), n_labels=48, initial_learning_rate=0.00001, depth = 2,
+#                  n_base_filters=8, batch_normalization=False)
 
 checkpointer = ModelCheckpoint(filepath='../weights/tracemap.h5', verbose=1, save_best_only=True)
 model.load_weights('../weights/tracemap.h5')
@@ -35,6 +38,12 @@ for i in range(5):
                    steps_per_epoch=200, epochs=1, shuffle=True, 
                    validation_data=data_generator_undirected(val_dir,valdatalist, n_label= 48,batch_size= 10,num_nodes_per_img =50), 
                    validation_steps=50, verbose=1, callbacks=[checkpointer])
+#    #use sample weight
+#    model.fit_generator(data_generator_undirected_sampleweight(train_dir,[traindatalist2],n_label= 48,batch_size= 10,num_nodes_per_img =50),
+#                   steps_per_epoch=200, epochs=1, shuffle=True, 
+#                   validation_data=data_generator_undirected_sampleweight(val_dir,valdatalist, n_label= 48,batch_size= 10,num_nodes_per_img =50), 
+#                   validation_steps=50, verbose=1, callbacks=[checkpointer])    
+#    
     model.save_weights('../weights/tracemap'+str(i)+'.h5')
     folderpath = train_dir
     data_file =traindatalist[0]
@@ -55,7 +64,7 @@ for i in range(5):
     ypred[ypred>0.5]=1
     ypred[ypred<0.5]=0
     scores=[]
-    for j in range(batch):
+    for j in range(len(labels)):
         score1= jaccard_similarity_score(labels[j],ypred[j,:])
         score2= utils.smoothed_jaccard(labels[j],ypred[j,:])
         scores.append((score1,score2))

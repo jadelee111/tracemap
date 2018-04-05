@@ -70,6 +70,34 @@ def UndirectedSimpleNetwork(input_shape, pool_size=(2, 2, 2), n_labels=48, initi
     model.compile(optimizer=Adam(lr=initial_learning_rate), loss=binary_crossentropy_weighted,metrics=metrics)
     print(model.summary())
     return model
+
+
+def UndirectedSimpleNetwork_sampleweight(input_shape, pool_size=(2, 2, 2), n_labels=48, initial_learning_rate=0.00001, depth = 2,
+                  n_base_filters=8, batch_normalization=False):
+    '''the network takes in a volume and predicts the direction for the next trace point
+    '''
+    inputs = Input(input_shape)
+    current_layer = inputs
+    layer1 = create_convolution_block(input_layer=current_layer, n_filters=n_base_filters,
+                                          batch_normalization=batch_normalization)
+    layer2 = create_convolution_block(input_layer=layer1, n_filters=n_base_filters,
+                                          batch_normalization=batch_normalization)
+    layer3 = MaxPooling3D(pool_size=pool_size)(layer2)
+    
+    layer4 = create_convolution_block(input_layer=layer3, n_filters=n_base_filters*2,
+                                          batch_normalization=batch_normalization)
+    layer5 = create_convolution_block(input_layer=layer4, n_filters=n_base_filters*2,
+                                          batch_normalization=batch_normalization)
+    layer6 = MaxPooling3D(pool_size=pool_size)(layer5)
+    flat_layer = Flatten()(layer6)
+    dense_layer1 = Dense(400, activation='relu', name='fc1')(flat_layer)
+    dense_layer2 = Dense(n_labels,activation = 'sigmoid',name='fc2')(dense_layer1)
+    model = Model(inputs=inputs, outputs=dense_layer2)
+    metrics=['acc',jaccard_coef_int]
+    model.compile(optimizer=Adam(lr=initial_learning_rate), loss="binary_crossentropy",metrics=metrics, sample_weight_mode="temporal")
+    print('sampleweight')
+    print(model.summary())
+    return model
     
 def DirectedSimpleNetwork(input_shape, pool_size=(2, 2, 2), n_labels=48, initial_learning_rate=0.00001, depth = 2,
                   n_base_filters=8, batch_normalization=False):
