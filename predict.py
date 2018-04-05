@@ -11,6 +11,7 @@ from generator import data_generator_undirected,data_generator_directed,sample_n
 from networks import UndirectedSimpleNetwork, DirectedSimpleNetwork
 from keras.callbacks import ModelCheckpoint
 from neuronTree import Treenode, Neurontree
+from sklearn.metrics import jaccard_similarity_score
 
 train_dir = '../data/train'
 val_dir = '../data/val'
@@ -28,7 +29,7 @@ model1 = UndirectedSimpleNetwork(input_shape, pool_size=(2, 2, 2), n_labels=48, 
 #model2 = DirectedSimpleNetwork(input_shape, pool_size=(2, 2, 2), n_labels=48, initial_learning_rate=0.00001, depth = 2,
 #                  n_base_filters=8, batch_normalization=False)
 
-model1.load_weights(model_path)
+#model1.load_weights(model_path)
 
 folderpath = train_dir
 data_file =traindatalist[0]
@@ -47,7 +48,15 @@ x_patch[:,0,2:-1,2:-1,2:-1] =np.array(imgs)
 y_patch[:,:] = np.array(labels)
 x2_patch[:,:] = np.array(p_encoding)
 vis_enlarge_ratio =5
-ypred = model2.predict([x_patch,x2_patch],batch_size=10)
+ypred = model1.predict(x_patch,batch_size=10)
+ypred[ypred>0.5]=1
+ypred[ypred<0.5]=0
+scores=[]
+for i in range(batch):
+    score = jaccard_similarity_score(labels[i],ypred[i,:])
+    scores.append(score)
+print(scores)
+'''
 sphere_vectors = utils.load_sphere_48_units()
 m = np.where(ypred>0.5)
 print('node_ids:',node_ids)
@@ -75,3 +84,4 @@ for i,node_id in enumerate(node_ids):
         file.close()
     else:
         print("i: %d, node_id: %d All zeros\n"%(i,node_id))
+'''

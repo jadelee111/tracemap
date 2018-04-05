@@ -180,8 +180,8 @@ def read_cropped_image(x,y,z,volume,side_length = 10):
     crop_volume[xcrop_l:(xcrop_r+1),ycrop_l:(ycrop_r+1),zcrop_l:(zcrop_r+1)] = volume[xmin:xmax+1,ymin:ymax+1,zmin:zmax+1]
     return (crop_volume, xmin,ymin,zmin)
 
-        
-        
+
+
         
         
     

@@ -54,7 +54,7 @@ def jaccard_coef_int(y_true, y_pred):
     # __author__ = Vladimir Iglovikov
     smooth =1
     y_pred = K.clip(y_pred, K.epsilon(), 1.0 - K.epsilon())
-    intersection = K.sum(y_true * y_pred_pos, axis=[0, -1, -2])
+    intersection = K.sum(y_true * y_pred, axis=-1)
     sum_ = K.sum(K.abs(y_true) + K.abs(y_pred), axis=-1)
     jac = (intersection + smooth) / (sum_ - intersection + smooth)
     return jac
