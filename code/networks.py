@@ -12,7 +12,7 @@ from keras.engine import Input, Model
 from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, Activation, BatchNormalization, Dense, Deconvolution3D,Flatten
 from keras.layers import concatenate
 from keras.optimizers import Adam
-from metrics import jaccard_distance
+from metrics import jaccard_coef,jaccard_coef_loss,binary_crossentropy_weighted,jaccard_coef_int
 
 K.set_image_data_format("channels_first")
 
@@ -63,9 +63,11 @@ def UndirectedSimpleNetwork(input_shape, pool_size=(2, 2, 2), n_labels=48, initi
                                           batch_normalization=batch_normalization)
     layer6 = MaxPooling3D(pool_size=pool_size)(layer5)
     flat_layer = Flatten()(layer6)
-    dense_layer = Dense(n_labels,activation = 'sigmoid')(flat_layer)
-    model = Model(inputs=inputs, outputs=dense_layer)
-    model.compile(optimizer=Adam(lr=initial_learning_rate), loss=jaccard_distance)
+    dense_layer1 = Dense(400, activation='relu', name='fc1')(flat_layer)
+    dense_layer2 = Dense(n_labels,activation = 'sigmoid',name='fc2')(dense_layer1)
+    model = Model(inputs=inputs, outputs=dense_layer2)
+    metrics=['acc',jaccard_coef_int]
+    model.compile(optimizer=Adam(lr=initial_learning_rate), loss=binary_crossentropy_weighted,metrics=metrics)
     print(model.summary())
     return model
     
@@ -93,6 +95,8 @@ def DirectedSimpleNetwork(input_shape, pool_size=(2, 2, 2), n_labels=48, initial
     dense_layer1 = Dense(400, activation='relu', name='fc1')(concat)
     dense_layer2 = Dense(n_labels,activation = 'sigmoid',name='prediction')(dense_layer1)
     model = Model(inputs=[input1,input2], outputs=dense_layer2)
-    model.compile(optimizer=Adam(lr=initial_learning_rate), loss=jaccard_distance)
+    
+    metrics=['acc',jaccard_coef_int]
+    model.compile(optimizer=Adam(lr=initial_learning_rate), loss=jaccard_coef_loss,metrics=metrics)
     print(model.summary())
     return model

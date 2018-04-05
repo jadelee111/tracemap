@@ -25,15 +25,23 @@ def read_swc(filename):
                      'formats': ('i4','i4', 'f4','f4','f4','f4','i4')})
     return swc
     
-def write_swc(filename,treenodelist):
+def write_swc(filename,treenodelist,node_type= None):
     #treenodelist is a list of treenodes
+    
     file = open(filename,"w")
     file.write("##n,type,x,y,z,radius,parent\n")
-    for i in range(len(treenodelist)):
-        file.write("%d %d %4f %4f %4f %4f %d\n"%(treenodelist[i].node_id,
-                                                 treenodelist[i].node_type,
-                                                 treenodelist[i].x,treenodelist[i].y,treenodelist[i].z,
-                                                 treenodelist[i].radius,treenodelist[i].pid))
+    if node_type is not None:
+        for i in range(len(treenodelist)):
+            file.write("%d %d %4f %4f %4f %4f %d\n"%(treenodelist[i].node_id,
+                                                     node_type,
+                                                     treenodelist[i].x,treenodelist[i].y,treenodelist[i].z,
+                                                     treenodelist[i].radius,treenodelist[i].pid))
+    else:
+        for i in range(len(treenodelist)):
+            file.write("%d %d %4f %4f %4f %4f %d\n"%(treenodelist[i].node_id,
+                                                     treenodelist[i].node_type,
+                                                     treenodelist[i].x,treenodelist[i].y,treenodelist[i].z,
+                                                     treenodelist[i].radius,treenodelist[i].pid))
     file.close()
     
     
@@ -100,6 +108,7 @@ def calc_one_hot_encoding_wrapper(nt,node_id,num_steps=1):
 
 
 def load_tiff(fname):  #it reads in the order of z,y,xs
+    #print(fname)
     tiff = TIFFfile(fname)
     #samples, sample_names = tiff.get_samples()
     arr = tiff.get_tiff_array(sample_index=0, subfile_type=0)
@@ -123,6 +132,12 @@ def write_ano_file(img_path, swc_paths,output_name):
     for i in range(len(swc_paths)):
         file.write("SWCFILE=%s\n"%swc_paths[i])
     file.close()
+    
+def accuracy(y_true,y_pred):
+    y_pred[y_pred>0.5]=1
+    y_pred[y_pred<0.5]=0
+    intersection = np.sum(y_pred==y_true)
+    return intersection/48.0
     
 def read_cropped_image(x,y,z,volume,side_length = 10):
     '''
@@ -172,8 +187,8 @@ def read_cropped_image(x,y,z,volume,side_length = 10):
     crop_volume[xcrop_l:(xcrop_r+1),ycrop_l:(ycrop_r+1),zcrop_l:(zcrop_r+1)] = volume[xmin:xmax+1,ymin:ymax+1,zmin:zmax+1]
     return (crop_volume, xmin,ymin,zmin)
 
-        
-        
+
+
         
         
     
